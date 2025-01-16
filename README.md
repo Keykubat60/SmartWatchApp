@@ -1,79 +1,118 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Smart Watch Monitoring Frontend
 
-# Getting Started
+Diese React Native App dient als Frontend für das Smart Watch Monitoring System. Sie ermöglicht die Überwachung von Smartwatch-Trägern, zeigt deren Standort, Gesundheitsdaten und Status in Echtzeit an.
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
+## Voraussetzungen
 
-## Step 1: Start the Metro Server
+- Node.js (Version 18 oder höher)
+- npm oder yarn
+- Ruby (für iOS)
+- CocoaPods (für iOS)
+- Android Studio (für Android)
+- Xcode (für iOS, nur auf macOS)
+- Git
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+## Installation
 
-To start Metro, run the following command from the _root_ of your React Native project:
-
+1. Repository klonen:
 ```bash
-# using npm
+git clone [repository-url]
+cd TemporaryProject
+```
+
+2. Dependencies installieren:
+```bash
+# Node Module installieren
+npm install
+
+# iOS-spezifische Installation (nur macOS)
+cd ios
+bundle install
+bundle exec pod install
+cd ..
+```
+
+3. Environment einrichten:
+- Stellen Sie sicher, dass Android Studio korrekt eingerichtet ist (für Android)
+- Stellen Sie sicher, dass Xcode installiert ist (für iOS)
+
+## Entwicklung starten
+
+1. Metro Bundler starten:
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Start your Application
+2. App auf Emulator/Gerät starten:
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
-
-### For Android
-
+Für iOS (nur macOS):
 ```bash
-# using npm
-npm run android
-
-# OR using Yarn
-yarn android
-```
-
-### For iOS
-
-```bash
-# using npm
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
+Für Android:
+```bash
+npm run android
+```
 
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
+## Projektstruktur
 
-## Step 3: Modifying your App
+```
+src/
+  ├── navigation/     # Navigation und Routing
+  ├── screens/        # Screen-Komponenten
+  ├── types/          # TypeScript Definitionen
+  └── services/       # API und andere Services
+```
 
-Now that you have successfully run the app, let's modify it.
+## Features
 
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
+- Benutzerauthentifizierung
+- Übersicht der überwachten Personen
+- Detailansicht mit:
+  - Standort auf Karte
+  - Gesundheitsdaten-Visualisierung
+  - Echtzeit-Status-Updates
 
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
+## Troubleshooting
 
-## Congratulations! :tada:
+### Häufige Probleme
 
-You've successfully run and modified your React Native App. :partying_face:
+1. Metro Bundler startet nicht:
+```bash
+npm start -- --reset-cache
+```
 
-### Now what?
+2. iOS Build schlägt fehl:
+```bash
+cd ios
+pod deintegrate
+pod install
+cd ..
+```
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
+3. Android Build schlägt fehl:
+```bash
+cd android
+./gradlew clean
+cd ..
+```
 
-# Troubleshooting
+## Entwicklungshinweise
 
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+- Verwenden Sie `npm start -- --reset-cache` wenn Sie Probleme mit dem Cache haben
+- Für iOS-Entwicklung stellen Sie sicher, dass CocoaPods aktuell ist
+- Für Android-Entwicklung stellen Sie sicher, dass das Android SDK korrekt eingerichtet ist
 
-# Learn More
+## Support
 
-To learn more about React Native, take a look at the following resources:
+Bei Fragen oder Problemen wenden Sie sich an das Entwicklungsteam.
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+npx react-native start --reset-cache
+
+cd TemporaryProject
+npm install
+cd ios
+pod install
+
+npx react-native run-ios
