@@ -7,6 +7,7 @@ import {
   StyleSheet,
   Alert,
 } from 'react-native';
+import { colors } from '../theme/colors';
 
 const AuthScreen = () => {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -83,36 +84,44 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: colors.background,
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
     textAlign: 'center',
+    color: colors.gray900,
   },
   subtitle: {
     fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
-    color: '#666',
+    color: colors.gray500,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: colors.gray200,
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 20,
     fontSize: 16,
+    backgroundColor: colors.white,
+    color: colors.gray900,
   },
   button: {
-    backgroundColor: '#6200ee',
-    padding: 15,
-    borderRadius: 8,
+    backgroundColor: colors.primary,
+    padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   buttonText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 16,
     fontWeight: 'bold',
   },

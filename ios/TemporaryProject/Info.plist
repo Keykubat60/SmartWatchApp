@@ -48,5 +48,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>MaterialIcons.ttf</string>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Diese App benötigt Zugriff auf Ihre Fotos, um ein Profilbild auszuwählen.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Diese App benötigt Zugriff auf Ihre Kamera, um ein Profilbild aufzunehmen.</string>
 </dict>
 </plist>

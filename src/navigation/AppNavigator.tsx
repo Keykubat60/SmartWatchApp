@@ -6,11 +6,16 @@ import HomeScreen from '../screens/HomeScreen';
 import UserDetailScreen from '../screens/UserDetailScreen';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { User } from '../types/index';
+import AddUserScreen from '../screens/AddUserScreen';
+import { TouchableOpacity, StyleSheet } from 'react-native';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { colors } from '../theme/colors';
 
 type RootStackParamList = {
   Home: undefined;
   UserDetail: { user: User };
   Auth: undefined;
+  AddUser: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -26,12 +31,24 @@ const AppNavigator = () => {
             <Stack.Screen 
               name="Home" 
               component={HomeScreen}
-              options={{
-                headerTitle: 'Übersicht',
+              options={({ navigation }) => ({
+                headerTitle: 'Meine Überwachten',
                 headerTitleStyle: {
                   fontWeight: 'bold',
                 },
-              }}
+                headerRight: () => (
+                  <TouchableOpacity 
+                    onPress={() => navigation.navigate('AddUser')}
+                    style={styles.headerButton}
+                  >
+                    <MaterialIcons 
+                      name="person-add" 
+                      size={24} 
+                      color={colors.primary}
+                    />
+                  </TouchableOpacity>
+                ),
+              })}
             />
             <Stack.Screen 
               name="UserDetail" 
@@ -42,6 +59,16 @@ const AppNavigator = () => {
                   fontWeight: 'bold',
                 },
               })}
+            />
+            <Stack.Screen 
+              name="AddUser" 
+              component={AddUserScreen}
+              options={{
+                headerTitle: 'Neuer Nutzer',
+                headerTitleStyle: {
+                  fontWeight: 'bold',
+                },
+              }}
             />
           </>
         ) : (
@@ -55,5 +82,12 @@ const AppNavigator = () => {
     </NavigationContainer>
   );
 };
+
+const styles = StyleSheet.create({
+  headerButton: {
+    padding: 8,
+    marginRight: 8,
+  },
+});
 
 export default AppNavigator; 
