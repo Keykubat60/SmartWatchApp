@@ -9,6 +9,7 @@ import {
   TextInput,
   Alert,
   Dimensions,
+  Modal,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -27,17 +28,56 @@ interface UserDetailScreenProps {
   navigation: any;
 }
 
+interface Notification {
+  id: string;
+  type: 'SOS' | 'FALL' | 'BATTERY' | 'OFFLINE' | 'OTHER';
+  message: string;
+  timestamp: string;
+  isRead: boolean;
+}
+
+interface ExtendedUserStatus {
+  isWearing: boolean;
+  hasNetworkConnection: boolean;
+  location: {
+    type: 'HOME' | 'AWAY' | 'UNKNOWN';
+    address?: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+}
+
 const MOCK_HEALTH_DATA = {
   labels: ['00:00', '06:00', '12:00', '18:00', '24:00'],
   heartRate: [75, 72, 78, 82, 76],
   steps: [0, 1200, 4500, 8900, 10200],
 };
 
+const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: '1',
+    type: 'SOS',
+    message: 'SOS-Alarm wurde ausgelöst',
+    timestamp: '2024-03-20T10:30:00',
+    isRead: false,
+  },
+  {
+    id: '2',
+    type: 'FALL',
+    message: 'Sturz erkannt',
+    timestamp: '2024-03-20T09:15:00',
+    isRead: false,
+  },
+];
+
 const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
   const { user } = route.params;
   const [isEditing, setIsEditing] = useState(false);
   const [editedUser, setEditedUser] = useState(user);
   const batteryStatus = getBatteryConfig(parseInt(user.batteryLevel));
+  const [showMap, setShowMap] = useState(false);
 
   const handleImagePick = () => {
     ImagePicker.launchImageLibrary({
@@ -171,6 +211,102 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
     });
   }, [navigation, isEditing]);
 
+  const renderNotificationIcon = (type: Notification['type']) => {
+    switch (type) {
+      case 'SOS':
+        return <MaterialIcons name="warning" size={24} color={colors.error} />;
+      case 'FALL':
+        return <MaterialIcons name="person-outline" size={24} color={colors.warning} />;
+      case 'BATTERY':
+        return <MaterialIcons name="battery-alert" size={24} color={colors.warning} />;
+      case 'OFFLINE':
+        return <MaterialIcons name="wifi-off" size={24} color={colors.error} />;
+      default:
+        return <MaterialIcons name="notifications" size={24} color={colors.gray500} />;
+    }
+  };
+
+  const renderStatusSection = () => (
+    <View style={styles.statusSection}>
+      {/* Benachrichtigungen */}
+      {MOCK_NOTIFICATIONS.length > 0 && (
+        <View style={styles.notificationsContainer}>
+          <Text style={styles.sectionTitle}>Aktuelle Benachrichtigungen</Text>
+          {MOCK_NOTIFICATIONS.map((notification) => (
+            <View key={notification.id} style={styles.notificationItem}>
+              {renderNotificationIcon(notification.type)}
+              <View style={styles.notificationContent}>
+                <Text style={styles.notificationMessage}>{notification.message}</Text>
+                <Text style={styles.notificationTime}>
+                  {new Date(notification.timestamp).toLocaleTimeString()}
+                </Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {/* Gerätestatus */}
+      <View style={styles.deviceStatusContainer}>
+        <Text style={styles.sectionTitle}>Gerätestatus</Text>
+        <View style={styles.statusGrid}>
+          {/* Batterie */}
+          <View style={styles.statusItem}>
+            <MaterialIcons 
+              name={batteryStatus.icon} 
+              size={24} 
+              color={batteryStatus.color}
+            />
+            <Text style={styles.statusLabel}>Akku</Text>
+            <Text style={[styles.statusValue, { color: batteryStatus.color }]}>
+              {user.batteryLevel}
+            </Text>
+          </View>
+
+          {/* Tragesstatus */}
+          <View style={styles.statusItem}>
+            <MaterialIcons 
+              name="watch" 
+              size={24} 
+              color={user.isWearing ? colors.success : colors.error}
+            />
+            <Text style={styles.statusLabel}>Status</Text>
+            <Text style={styles.statusValue}>
+              {user.isWearing ? 'Wird getragen' : 'Nicht getragen'}
+            </Text>
+          </View>
+
+          {/* Netzwerkstatus */}
+          <View style={styles.statusItem}>
+            <MaterialIcons 
+              name={user.hasNetworkConnection ? "wifi" : "wifi-off"}
+              size={24} 
+              color={user.hasNetworkConnection ? colors.success : colors.error}
+            />
+            <Text style={styles.statusLabel}>Netzwerk</Text>
+            <Text style={styles.statusValue}>
+              {user.hasNetworkConnection ? 'Verbunden' : 'Offline'}
+            </Text>
+          </View>
+
+          {/* Standort */}
+          <TouchableOpacity 
+            style={styles.statusItem}
+            onPress={() => setShowMap(true)}
+          >
+            <MaterialIcons 
+              name="location-on" 
+              size={24} 
+              color={colors.primary}
+            />
+            <Text style={styles.statusLabel}>Standort</Text>
+            <Text style={styles.statusValue}>{user.status}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+
   return isEditing ? renderEditMode() : (
     <View style={styles.container}>
       {/* Profilbereich */}
@@ -204,25 +340,44 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
         </View>
       </View>
 
-      {/* Karte */}
-      <MapView
-        style={styles.map}
-        initialRegion={{
-          latitude: 52.520008,
-          longitude: 13.404954,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        }}
+      {/* Neue Status-Sektion */}
+      <ScrollView style={styles.scrollContainer}>
+        {renderStatusSection()}
+      </ScrollView>
+
+      {/* Karte als Modal */}
+      <Modal
+        visible={showMap}
+        animationType="slide"
+        onRequestClose={() => setShowMap(false)}
       >
-        <Marker
-          coordinate={{
-            latitude: 52.520008,
-            longitude: 13.404954,
-          }}
-          title={user.name}
-          description={user.status}
-        />
-      </MapView>
+        <View style={styles.mapContainer}>
+          <MapView
+            style={styles.map}
+            initialRegion={{
+              latitude: 52.520008,
+              longitude: 13.404954,
+              latitudeDelta: 0.01,
+              longitudeDelta: 0.01,
+            }}
+          >
+            <Marker
+              coordinate={{
+                latitude: 52.520008,
+                longitude: 13.404954,
+              }}
+              title={user.name}
+              description={user.status}
+            />
+          </MapView>
+          <TouchableOpacity 
+            style={styles.closeMapButton}
+            onPress={() => setShowMap(false)}
+          >
+            <MaterialIcons name="close" size={24} color={colors.white} />
+          </TouchableOpacity>
+        </View>
+      </Modal>
 
       {/* Bottom Sheet mit Gesundheitsdaten */}
       <BottomSheet
@@ -412,6 +567,101 @@ const styles = StyleSheet.create({
   editButton: {
     padding: 8,
     marginRight: 8,
+  },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  statusSection: {
+    padding: 16,
+  },
+  notificationsContainer: {
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 16,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 16,
+    color: colors.gray900,
+  },
+  notificationItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray100,
+  },
+  notificationContent: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  notificationMessage: {
+    fontSize: 16,
+    color: colors.gray900,
+    marginBottom: 4,
+  },
+  notificationTime: {
+    fontSize: 14,
+    color: colors.gray500,
+  },
+  deviceStatusContainer: {
+    backgroundColor: colors.surface,
+    padding: 16,
+    borderRadius: 12,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  statusGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statusItem: {
+    width: '48%',
+    backgroundColor: colors.gray50,
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: colors.gray500,
+    marginTop: 8,
+  },
+  statusValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: colors.gray900,
+    marginTop: 4,
+  },
+  mapContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  closeMapButton: {
+    position: 'absolute',
+    top: 40,
+    right: 16,
+    backgroundColor: colors.primary,
+    borderRadius: 24,
+    padding: 8,
+    elevation: 4,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
 });
 

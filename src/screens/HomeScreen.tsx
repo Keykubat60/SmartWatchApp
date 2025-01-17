@@ -31,6 +31,15 @@ const MOCK_USERS: User[] = [
     },
     imei: '123456789012345',
     code: 'ABC123',
+    isWearing: true,
+    hasNetworkConnection: true,
+    location: {
+      type: 'HOME',
+      coordinates: {
+        latitude: 52.520008,
+        longitude: 13.404954,
+      }
+    },
   },
   {
     id: '2',
@@ -49,6 +58,15 @@ const MOCK_USERS: User[] = [
     },
     imei: '987654321098765',
     code: 'DEF456',
+    isWearing: true,
+    hasNetworkConnection: true,
+    location: {
+      type: 'AWAY',
+      coordinates: {
+        latitude: 52.520008,
+        longitude: 13.404954,
+      }
+    },
   },
   {
     id: '3',
@@ -67,6 +85,15 @@ const MOCK_USERS: User[] = [
     },
     imei: '456789012345678',
     code: 'GHI789',
+    isWearing: false,
+    hasNetworkConnection: false,
+    location: {
+      type: 'UNKNOWN',
+      coordinates: {
+        latitude: 52.520008,
+        longitude: 13.404954,
+      }
+    },
   },
 ];
 

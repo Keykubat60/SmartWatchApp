@@ -16,4 +16,14 @@ export interface User {
   imei: string;
   code: string;
   profileImage?: string;
+  isWearing: boolean;
+  hasNetworkConnection: boolean;
+  location: {
+    type: 'HOME' | 'AWAY' | 'UNKNOWN';
+    address?: string;
+    coordinates: {
+      latitude: number;
+      longitude: number;
+    };
+  };
 } 
