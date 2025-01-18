@@ -10,6 +10,7 @@ import {
   Alert,
   Dimensions,
   Modal,
+  SafeAreaView,
 } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -34,6 +35,16 @@ interface Notification {
   message: string;
   timestamp: string;
   isRead: boolean;
+  location?: {
+    latitude: number;
+    longitude: number;
+    address?: string;
+  };
+  emergencyCall?: {
+    number: string;
+    timestamp: string;
+    status: 'completed' | 'failed' | 'ongoing';
+  };
 }
 
 interface ExtendedUserStatus {
@@ -62,6 +73,16 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     message: 'SOS-Alarm wurde ausgelöst',
     timestamp: '2024-03-20T10:30:00',
     isRead: false,
+    location: {
+      latitude: 52.520008,
+      longitude: 13.404954,
+      address: 'Alexanderplatz, 10178 Berlin',
+    },
+    emergencyCall: {
+      number: '+49 123 456789',
+      timestamp: '2024-03-20T10:30:05',
+      status: 'completed',
+    },
   },
   {
     id: '2',
@@ -69,6 +90,11 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     message: 'Sturz erkannt',
     timestamp: '2024-03-20T09:15:00',
     isRead: false,
+    location: {
+      latitude: 52.523420,
+      longitude: 13.411440,
+      address: 'Museumsinsel, 10178 Berlin',
+    },
   },
 ];
 
@@ -78,6 +104,8 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
   const [editedUser, setEditedUser] = useState(user);
   const batteryStatus = getBatteryConfig(parseInt(user.batteryLevel));
   const [showMap, setShowMap] = useState(false);
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const [showNotificationDetails, setShowNotificationDetails] = useState(false);
 
   const handleImagePick = () => {
     ImagePicker.launchImageLibrary({
@@ -100,6 +128,24 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
       'Änderungen wurden gespeichert',
       [{ text: 'OK', onPress: () => setIsEditing(false) }]
     );
+  };
+
+  const handleHealthSummary = () => {
+    Alert.alert(
+      'KI-Gesundheitszusammenfassung',
+      'Zusammenfassung der letzten 24 Stunden:\n\n' +
+      '• Durchschnittliche Herzfrequenz: 76 bpm - im normalen Bereich\n' +
+      '• Schrittanzahl: 10.200 - Bewegungsziel erreicht\n' +
+      '• Schlafqualität: 7.2h - gute Schlafphase\n' +
+      '• Aktivitätsmuster: Regelmäßige Bewegung am Vormittag\n' +
+      '• Empfehlung: Mehr Bewegung am Nachmittag einplanen',
+      [{ text: 'OK' }]
+    );
+  };
+
+  const handleNotificationPress = (notification: Notification) => {
+    setSelectedNotification(notification);
+    setShowNotificationDetails(true);
   };
 
   const renderEditMode = () => (
@@ -226,23 +272,120 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
     }
   };
 
+  const renderNotificationDetails = () => {
+    if (!selectedNotification) return null;
+
+    return (
+      <Modal
+        visible={showNotificationDetails}
+        animationType="slide"
+        onRequestClose={() => setShowNotificationDetails(false)}
+      >
+        <SafeAreaView style={styles.notificationDetailContainer}>
+          <View style={styles.notificationDetailHeader}>
+            <TouchableOpacity 
+              onPress={() => setShowNotificationDetails(false)}
+              style={styles.closeButton}
+            >
+              <MaterialIcons name="close" size={24} color={colors.gray900} />
+            </TouchableOpacity>
+            <Text style={styles.notificationDetailTitle}>
+              Benachrichtigungsdetails
+            </Text>
+          </View>
+          <ScrollView style={styles.notificationDetailContent}>
+            <View style={styles.detailSection}>
+              <Text style={styles.detailLabel}>Typ</Text>
+              <View style={styles.detailRow}>
+                {renderNotificationIcon(selectedNotification.type)}
+                <Text style={styles.detailValue}>{selectedNotification.message}</Text>
+              </View>
+            </View>
+
+            <View style={styles.detailSection}>
+              <Text style={styles.detailLabel}>Zeit</Text>
+              <Text style={styles.detailValue}>
+                {new Date(selectedNotification.timestamp).toLocaleString()}
+              </Text>
+            </View>
+
+            {selectedNotification.type === 'SOS' && selectedNotification.emergencyCall && (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailLabel}>Notruf</Text>
+                <View style={styles.emergencyCallInfo}>
+                  <MaterialIcons name="phone" size={20} color={colors.primary} />
+                  <Text style={styles.detailValue}>{selectedNotification.emergencyCall.number}</Text>
+                  <Text style={[styles.callStatus, { 
+                    color: selectedNotification.emergencyCall.status === 'completed' 
+                      ? colors.success 
+                      : colors.error 
+                  }]}>
+                    {selectedNotification.emergencyCall.status === 'completed' ? 'Verbunden' : 'Fehlgeschlagen'}
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {selectedNotification.location && (
+              <View style={styles.detailSection}>
+                <Text style={styles.detailLabel}>Standort</Text>
+                <Text style={styles.detailValue}>{selectedNotification.location.address}</Text>
+                <View style={styles.notificationMap}>
+                  <MapView
+                    style={styles.map}
+                    initialRegion={{
+                      latitude: selectedNotification.location.latitude,
+                      longitude: selectedNotification.location.longitude,
+                      latitudeDelta: 0.01,
+                      longitudeDelta: 0.01,
+                    }}
+                  >
+                    <Marker
+                      coordinate={{
+                        latitude: selectedNotification.location.latitude,
+                        longitude: selectedNotification.location.longitude,
+                      }}
+                      title={selectedNotification.message}
+                    />
+                  </MapView>
+                </View>
+              </View>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+    );
+  };
+
+  const renderNotificationItem = (notification: Notification) => (
+    <TouchableOpacity 
+      key={notification.id} 
+      style={styles.notificationItem}
+      onPress={() => handleNotificationPress(notification)}
+    >
+      {renderNotificationIcon(notification.type)}
+      <View style={styles.notificationContent}>
+        <Text style={styles.notificationMessage}>{notification.message}</Text>
+        <Text style={styles.notificationTime}>
+          {new Date(notification.timestamp).toLocaleTimeString()}
+        </Text>
+        {notification.location && (
+          <Text style={styles.notificationLocation}>
+            {notification.location.address}
+          </Text>
+        )}
+      </View>
+      <MaterialIcons name="chevron-right" size={24} color={colors.gray400} />
+    </TouchableOpacity>
+  );
+
   const renderStatusSection = () => (
     <View style={styles.statusSection}>
       {/* Benachrichtigungen */}
       {MOCK_NOTIFICATIONS.length > 0 && (
         <View style={styles.notificationsContainer}>
           <Text style={styles.sectionTitle}>Aktuelle Benachrichtigungen</Text>
-          {MOCK_NOTIFICATIONS.map((notification) => (
-            <View key={notification.id} style={styles.notificationItem}>
-              {renderNotificationIcon(notification.type)}
-              <View style={styles.notificationContent}>
-                <Text style={styles.notificationMessage}>{notification.message}</Text>
-                <Text style={styles.notificationTime}>
-                  {new Date(notification.timestamp).toLocaleTimeString()}
-                </Text>
-              </View>
-            </View>
-          ))}
+          {MOCK_NOTIFICATIONS.map((notification) => renderNotificationItem(notification))}
         </View>
       )}
 
@@ -304,6 +447,22 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
           </TouchableOpacity>
         </View>
       </View>
+
+      {/* KI-Zusammenfassung Button */}
+      <TouchableOpacity 
+        style={styles.summaryButton}
+        onPress={handleHealthSummary}
+      >
+        <MaterialIcons 
+          name="analytics" 
+          size={24} 
+          color={colors.white}
+          style={styles.summaryIcon}
+        />
+        <Text style={styles.summaryButtonText}>
+          KI-Zusammenfassung erstellen
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -428,6 +587,7 @@ const UserDetailScreen = ({ route, navigation }: UserDetailScreenProps) => {
           />
         </View>
       </BottomSheet>
+      {renderNotificationDetails()}
     </View>
   );
 };
@@ -662,6 +822,96 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
+  },
+  summaryButton: {
+    backgroundColor: colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 24,
+    elevation: 2,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  summaryIcon: {
+    marginRight: 8,
+  },
+  summaryButtonText: {
+    color: colors.white,
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  notificationDetailContainer: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  notificationDetailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.gray200,
+    height: 60,
+  },
+  closeButton: {
+    padding: 2,
+    marginLeft: 4,
+  },
+  notificationDetailTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 16,
+    color: colors.gray900,
+  },
+  notificationDetailContent: {
+    flex: 1,
+    padding: 16,
+  },
+  detailSection: {
+    marginBottom: 24,
+  },
+  detailLabel: {
+    fontSize: 14,
+    color: colors.gray500,
+    marginBottom: 8,
+  },
+  detailValue: {
+    fontSize: 16,
+    color: colors.gray900,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  emergencyCallInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    backgroundColor: colors.gray50,
+    borderRadius: 8,
+  },
+  callStatus: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  notificationMap: {
+    height: 200,
+    marginTop: 12,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  notificationLocation: {
+    fontSize: 14,
+    color: colors.gray500,
+    marginTop: 4,
   },
 });
 
